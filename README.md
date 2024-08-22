@@ -1,1 +1,1 @@
-# arches-resource-sets
+# Arches Resource Sets Application
