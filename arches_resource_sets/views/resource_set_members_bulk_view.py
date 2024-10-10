@@ -1,9 +1,7 @@
-from django.db import IntegrityError
 from arches.app.utils.betterJSONSerializer import JSONDeserializer
 from arches.app.utils.response import JSONResponse
 from arches.app.views.api import APIBase
-from urllib.parse import unquote
-from arches_resource_sets.models import ResourceSetMember, ResourceSet
+from arches_resource_sets.models import ResourceSet
 
 
 class ResourceSetMembersBulkView(APIBase):
