@@ -4,20 +4,29 @@ from django.http import Http404
 
 from arches.app.views.api import APIBase
 from arches_resource_sets.models import ResourceSet
-from arches.app.utils.response import JSONResponse
+from arches.app.utils.response import JSONErrorResponse, JSONResponse
 from arches.app.utils.betterJSONSerializer import JSONDeserializer, JSONSerializer
 
 
-class ResourceSetObjectView(APIBase):
-    def get(self, request, set_id):
+class ResourceSetView(APIBase):
+    def get(self, request, set_id=None):
+        if set_id is None:
+            return JSONResponse({"resource_sets": ResourceSet.objects.all()})
         set = ResourceSet.objects.filter(id=set_id).values().first()
         return JSONResponse({"resource_set": set})
 
-    def post(self, request, set_id):
+    def post(self, request, set_id=None):
+        if set_id is None:
+            set_id = uuid.uuid4()
+            set = ResourceSet.objects.create(id=set_id, owner=request.user)
+        else:
+            try:
+                set = ResourceSet.objects.get(id=set_id)
+            except ResourceSet.DoesNotExist:
+                return JSONErrorResponse("Could not update resource set", "Resource set id '{}' not found".format(set_id), status=404)
+
         request_body = JSONDeserializer().deserialize(request.body)
         description = request_body["description"] if "description" else ""
-
-        set = ResourceSet.objects.get(id=set_id)
         set.description = description
         set.save()
 
@@ -27,23 +36,7 @@ class ResourceSetObjectView(APIBase):
         try:
             set_obj = ResourceSet.objects.get(id=set_id)
         except ResourceSet.DoesNotExist:
-            raise Http404
+            return JSONErrorResponse("Could not delete resource set", "Resource set id '{}' not found".format(set_id), status=404)   
 
         set_obj.delete()
         return JSONResponse({"resource_set": set_id})
-
-
-class ResourceSetView(APIBase):
-    action = "list"
-
-    def get(self, request):
-        sets = ResourceSet.objects.all()
-        return JSONResponse({"resource_sets": sets})
-
-    def post(self, request):
-        set_id = uuid.uuid4()
-        request_body = JSONDeserializer().deserialize(request.body)
-        description = request_body["description"] if "description" else ""
-        set = ResourceSet.objects.create(id=set_id, owner=request.user, description=description)
-
-        return JSONResponse({"resource_set": {"id": str(set_id)}}, status=201)

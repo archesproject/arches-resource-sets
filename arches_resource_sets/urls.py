@@ -5,10 +5,8 @@ from django.urls import include, path
 
 from arches_resource_sets.views.resource_set_view import (
     ResourceSetView,
-    ResourceSetObjectView,
 )
 from arches_resource_sets.views.resource_set_member_view import (
-    ResourceSetMembersView,
     ResourceSetMemberView,
 )
 from arches_resource_sets.views.resource_set_members_bulk_view import (
@@ -16,36 +14,29 @@ from arches_resource_sets.views.resource_set_members_bulk_view import (
 )
 
 urlpatterns = [
-    path("resource_sets", ResourceSetView.as_view(), name="resource_sets"),
+    path("resource_sets/", ResourceSetView.as_view(), name="resource_sets"),
     path(
-        "resource_set",
+        "resource_sets/<uuid:set_id>",
         ResourceSetView.as_view(),
-        name="resource_set_add",
-    ),
-    path(
-        "resource_set/<uuid:set_id>",
-        ResourceSetObjectView.as_view(),
         name="resource_set",
     ),
     path(
-        "resource_set/<uuid:set_id>/members/",
-        ResourceSetMembersView.as_view(),
+        "resource_sets/<uuid:set_id>/members/",
+        ResourceSetMemberView.as_view(),
         name="resource_set_members",
     ),
     path(
-        "resource_set/<uuid:set_id>/member/<uuid:resource_id>",
+        "resource_sets/<uuid:set_id>/members/<uuid:resource_id>",
         ResourceSetMemberView.as_view(),
         name="resource_set_member",
     ),
     path(
-        "resource_set/<uuid:set_id>/bulk",
+        "resource_sets/<uuid:set_id>/bulk",
         ResourceSetMembersBulkView.as_view(),
         name="resource_set_members_bulk",
     ),
 ]
 # Ensure Arches core urls are superseded by project-level urls
-urlpatterns.append(path("api/", include("arches.urls")))
-
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 # Only handle i18n routing in active project. This will still handle the routes provided by Arches core and Arches applications,
