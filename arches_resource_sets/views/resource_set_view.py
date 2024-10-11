@@ -15,15 +15,23 @@ class ResourceSetView(APIBase):
         set = ResourceSet.objects.filter(id=set_id).values().first()
         return JSONResponse({"resource_set": set})
 
-    def post(self, request, set_id=None):
-        if set_id is None:
-            set_id = uuid.uuid4()
-            set = ResourceSet.objects.create(id=set_id, owner=request.user)
-        else:
-            try:
-                set = ResourceSet.objects.get(id=set_id)
-            except ResourceSet.DoesNotExist:
-                return JSONErrorResponse("Could not update resource set", "Resource set id '{}' not found".format(set_id), status=404)
+    def put(self, request, set_id):
+        try:
+            set = ResourceSet.objects.get(id=set_id)
+        except ResourceSet.DoesNotExist:
+            return JSONErrorResponse("Could not update resource set", "Resource set id '{}' not found".format(set_id), status=404)
+        
+        request_body = JSONDeserializer().deserialize(request.body)
+        description = request_body["description"] if "description" else ""
+        set.description = description
+        set.save()
+
+        return JSONResponse({"resource_set": {"id": str(set_id)}})
+
+
+    def post(self, request):
+        set_id = uuid.uuid4()
+        set = ResourceSet.objects.create(id=set_id, owner=request.user)
 
         request_body = JSONDeserializer().deserialize(request.body)
         description = request_body["description"] if "description" else ""
