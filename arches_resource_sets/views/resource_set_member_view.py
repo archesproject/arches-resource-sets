@@ -18,17 +18,14 @@ class ResourceSetMemberView(APIBase):
 
     def post(self, request, set_id):
         try:
-            ResourceSet.objects.get(pk=set_id) # throwaway to check if set exists
-        except ResourceSet.DoesNotExist:
-            return JSONErrorResponse("Resource Set not found", "Resource Set with ID '{}' not found".format(set_id), status=404)
-        
-        try:
             request_body = JSONDeserializer().deserialize(request.body)
             resource_id = request_body["resource_id"] if "resource_id" else ""
             ResourceSetMember.objects.create(resource_set_id=set_id, resource_instance_id=resource_id)
             return JSONResponse({"resource_set_id": set_id, "resource_instance_id": resource_id})
         except IntegrityError as e:
-            if(len(e.args) > 0 and "is not present in table" in e.args[0]):
+            if(len(e.args) > 0 and 'is not present in table "resource_set"' in e.args[0]):
+                return JSONErrorResponse("Resource set not found", "Resource Set with ID '{}' was not found".format(resource_id), status=400)
+            elif(len(e.args) > 0 and 'is not present in table "resource_instances"' in e.args[0]):
                 return JSONErrorResponse("Could not add resource to set", "Invalid Resource ID '{}'".format(resource_id), status=400)
             else:
                 return JSONErrorResponse("Resource in set", "Resource instance '{}' is already in this set".format(resource_id), status=400)
