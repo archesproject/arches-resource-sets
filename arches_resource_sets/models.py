@@ -7,7 +7,7 @@ from arches.app.models.models import I18n_TextField
 
 
 class ResourceSet(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, serialize=True)
     owner = models.ForeignKey(
         db_column="userid",
         null=False,
