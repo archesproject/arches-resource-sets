@@ -58,7 +58,7 @@ class ResourceSetView(APIBase):
         try:
             set_obj = ResourceSet.objects.get(id=set_id)
             set_obj.delete()
-            return JSONResponse({"id":set_id, "resource_set": set_id})
+            return JSONResponse({"resource_set": set_obj})
         except ResourceSet.DoesNotExist:
             return JSONErrorResponse("Could not delete resource set", "Resource set id '{}' not found".format(set_id), status=404)   
         except Exception as e:
