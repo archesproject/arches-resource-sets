@@ -37,14 +37,15 @@ class ResourceSetView(APIBase):
 
 
     def post(self, request):
+        description = ""
         set_id = uuid.uuid4()
-        set = ResourceSet.objects.create(id=set_id, owner=request.user)
         try:
-            request_body = JSONDeserializer().deserialize(request.body)
-            description = request_body["description"] if "description" in request_body else ""
-            set.description = description
-            set.save()
-            return JSONResponse({"resource_set": set})
+            if request.body:
+                request_body = JSONDeserializer().deserialize(request.body)
+                description = request_body["description"] if "description" in request_body else ""
+
+            resource_set = ResourceSet.objects.create(id=set_id, owner=request.user, description=description)
+            return JSONResponse({"resource_set": resource_set})
         except JSONDecodeError:
             return JSONErrorResponse("Request was malformed", "Ensure the request body is valid json", status=400)
         except Exception as e:
