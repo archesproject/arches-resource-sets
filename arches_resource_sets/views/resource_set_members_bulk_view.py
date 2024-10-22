@@ -12,7 +12,7 @@ class ResourceSetMembersBulkView(APIBase):
     def post(self, request, set_id):
         try:        
             request_body = JSONDeserializer().deserialize(request.body)
-            resource_instance_ids = request_body["resource_ids"] if "resource_ids" in request_body else ""
+            resource_instance_ids = request_body["resource_instance_ids"] if "resource_instance_ids" in request_body else ""
             operation = request_body["operation"] if "operation" in request_body else "add"
             resource_set = ResourceSet.objects.get(id=set_id)
             if operation == "add":
