@@ -12,14 +12,14 @@ class ResourceSetMembersBulkView(APIBase):
     def post(self, request, set_id):
         try:        
             request_body = JSONDeserializer().deserialize(request.body)
-            resource_ids = request_body["resource_ids"] if "resource_ids" in request_body else ""
+            resource_instance_ids = request_body["resource_ids"] if "resource_ids" in request_body else ""
             operation = request_body["operation"] if "operation" in request_body else "add"
             resource_set = ResourceSet.objects.get(id=set_id)
             if operation == "add":
-                added, errors = resource_set.add_members(resource_ids)
+                added, errors = resource_set.add_members(resource_instance_ids)
                 return JSONResponse({"added": added, "errors": errors})
             elif operation == "remove":
-                removed, errors = resource_set.remove_members(resource_ids)
+                removed, errors = resource_set.remove_members(resource_instance_ids)
                 return JSONResponse({"removed": removed, "errors": errors})
             else: 
                 return JSONErrorResponse("Bulk operation failed", "operation '{}' is invalid".format(operation), status=400)

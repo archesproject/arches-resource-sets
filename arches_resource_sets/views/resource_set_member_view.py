@@ -15,7 +15,7 @@ class ResourceSetMemberView(APIBase):
         except ResourceSet.DoesNotExist:
             return JSONErrorResponse("Resource Set not found", "Resource Set with ID '{}' not found".format(set_id), status=404)
         
-        return JSONResponse({"resource_set_members": set_members})
+        return JSONResponse({"resource_instance_ids": set_members})
 
     def post(self, request, set_id):
         try:

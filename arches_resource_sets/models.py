@@ -35,7 +35,7 @@ class ResourceSet(models.Model):
 
     def remove_members(self, members):
         removed = []
-        errors = []
+        errors = {}
         for member in members:
             try:
                 ResourceSetMember.objects.get(resource_set_id=self.id, resource_instance_id=member).delete()
