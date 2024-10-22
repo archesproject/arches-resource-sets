@@ -15,17 +15,17 @@ class ResourceSetView(APIBase):
     def get(self, request, set_id=None):
         if set_id is None:
             return JSONResponse({"resource_sets": ResourceSet.objects.all()})
-        set = ResourceSet.objects.filter(id=set_id).values().first()
-        return JSONResponse({"resource_set": set})
+        resource_set = ResourceSet.objects.filter(id=set_id).values().first()
+        return JSONResponse({"resource_set": resource_set})
 
     def put(self, request, set_id):
         try:
-            set = ResourceSet.objects.get(id=set_id)
+            resource_set = ResourceSet.objects.get(id=set_id)
             request_body = JSONDeserializer().deserialize(request.body)
             description = request_body["description"] if "description" else ""
-            set.description = description
-            set.save()
-            return JSONResponse({"resource_set": set})
+            resource_set.description = description
+            resource_set.save()
+            return JSONResponse({"resource_set": resource_set})
         except ResourceSet.DoesNotExist:
             return JSONErrorResponse("Could not update resource set", "Resource set id '{}' not found".format(set_id), status=404)
         except JSONDecodeError:

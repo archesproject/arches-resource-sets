@@ -24,23 +24,25 @@ class ResourceSet(models.Model):
 
     def add_members(self, members):
         added = []
+        errors = {}
         for member in members:
             try:
                 ResourceSetMember.objects.create(resource_set_id=self.id, resource_instance_id=member)
                 added.append(member)
-            except IntegrityError:
-                pass
-        return added
+            except Exception as e:
+                errors[member] = str(e)
+        return added, errors
 
     def remove_members(self, members):
         removed = []
+        errors = []
         for member in members:
             try:
                 ResourceSetMember.objects.get(resource_set_id=self.id, resource_instance_id=member).delete()
                 removed.append(member)
-            except ResourceSetMember.DoesNotExist:
-                pass
-        return removed
+            except Exception as e:
+                errors[member] = str(e)
+        return removed, errors
 
 
 class ResourceSetMember(models.Model):
