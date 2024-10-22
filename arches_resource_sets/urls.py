@@ -3,47 +3,45 @@ from django.conf.urls.static import static
 from django.conf.urls.i18n import i18n_patterns
 from django.urls import include, path
 
+from arches_resource_sets.views.resource_set_view import (
+    ResourceSetView,
+)
+from arches_resource_sets.views.resource_set_member_view import (
+    ResourceSetMemberView,
+)
+from arches_resource_sets.views.resource_set_members_bulk_view import (
+    ResourceSetMembersBulkView,
+)
+
 urlpatterns = [
-    path("", include("arches.urls")),
-    path("api/resource_sets/", ListsView.as_view(), name="resource_sets"),
+    path("resource_sets/", ResourceSetView.as_view(), name="resource_sets"),
     path(
-        "api/resource_set/<uuid:list_id>/",
-        ListView.as_view(),
+        "resource_sets/<uuid:set_id>",
+        ResourceSetView.as_view(),
         name="resource_set",
     ),
     path(
-        "api/resource_set/<uuid:list_id>/add",
-        ListView.as_view(),
-        name="resource_set_add",
+        "resource_sets/<uuid:set_id>/members/",
+        ResourceSetMemberView.as_view(),
+        name="resource_set_members",
     ),
     path(
-        "api/resource_set/<uuid:list_id>/delete",
-        ListView.as_view(),
-        name="resource_set_add",
+        "resource_sets/<uuid:set_id>/members/<uuid:resource_id>",
+        ResourceSetMemberView.as_view(),
+        name="resource_set_member",
     ),
     path(
-        "api/resource_set/<uuid:list_id>/resources/",
-        ListView.as_view(),
-        name="resource_set",
+        "resource_sets/<uuid:set_id>/bulk",
+        ResourceSetMembersBulkView.as_view(),
+        name="resource_set_members_bulk",
     ),
-    path(
-        "api/resource_set/<uuid:list_id>/resources/add",
-        ListView.as_view(),
-        name="resource_set",
-    ),
-    path(
-        "api/resource_set/<uuid:list_id>/resources/delete",
-        ListView.as_view(),
-        name="resource_set",
-    ),
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+]
+# Ensure Arches core urls are superseded by project-level urls
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 # Only handle i18n routing in active project. This will still handle the routes provided by Arches core and Arches applications,
 # but handling i18n routes in multiple places causes application errors.
-if (
-    settings.APP_NAME != "Arches"
-    and settings.APP_NAME not in settings.ARCHES_APPLICATIONS
-):
+if settings.ROOT_URLCONF == __name__:
     if settings.SHOW_LANGUAGE_SWITCH is True:
         urlpatterns = i18n_patterns(*urlpatterns)
 
