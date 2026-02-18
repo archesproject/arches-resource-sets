@@ -1,43 +1,40 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = ["setuptools>=77", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "arches-resource-sets"
 readme = "README.md"
 authors = []
-license = {text = "GNU AGPL3"}
+license = "AGPL-3.0-or-later"
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Framework :: Django",
-    "Framework :: Django :: 4.2",
+    "Framework :: Django :: 5.2",
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
     "Intended Audience :: Information Technology",
-    "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
 ]
 requires-python = ">=3.11"
-
 dependencies = [
-    "arches>=7.6.0"
+    "arches>=8.1.0,<8.2.0",
 ]
-
 version = "0.0.1"
 
-[project.optional-dependencies]
+[dependency-groups]
 dev = [
-    "livereload",
-    "sst",
+    "black==24.4.2",
     "coverage",
     "django-silk==5.1.0",
-    "pre-commit",
-    "black==24.4.2",
+    "livereload",
+    "pre-commit==3.8.0",
+    "sst",
 ]
 
 [tool.setuptools]

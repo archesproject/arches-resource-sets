@@ -2,10 +2,7 @@
 Django settings for arches_resource_sets project.
 """
 
-import json
 import os
-import sys
-import arches
 import inspect
 import semantic_version
 from datetime import datetime, timedelta
@@ -33,7 +30,7 @@ SEARCH_COMPONENT_LOCATIONS.append("arches_resource_sets.search_components")
 
 LOCALE_PATHS.insert(0, os.path.join(APP_ROOT, "locale"))
 
-FILE_TYPE_CHECKING = False
+FILE_TYPE_CHECKING = "lenient"
 FILE_TYPES = [
     "bmp",
     "gif",
@@ -60,6 +57,9 @@ SECRET_KEY = "rs0_n%ydc(u=ue-aw208=1hw!=$ba(dz@uz7ob_s_hq27*l9=!"
 DEBUG = True
 
 ROOT_URLCONF = "arches_resource_sets.urls"
+ROOT_HOSTCONF = "arches_resource_sets.hosts"
+
+DEFAULT_HOST = "arches_resource_sets"
 
 # Modify this line as needed for your project to connect to elasticsearch with a password that you generate
 ELASTICSEARCH_CONNECTION_OPTIONS = {
@@ -69,8 +69,8 @@ ELASTICSEARCH_CONNECTION_OPTIONS = {
 }
 
 # If you need to connect to Elasticsearch via an API key instead of username/password, use the syntax below:
-# ELASTICSEARCH_CONNECTION_OPTIONS = {"timeout": 30, "verify_certs": False, "api_key": "<ENCODED_API_KEY>"}
-# ELASTICSEARCH_CONNECTION_OPTIONS = {"timeout": 30, "verify_certs": False, "api_key": ("<ID>", "<API_KEY>")}
+# ELASTICSEARCH_CONNECTION_OPTIONS = {"request_timeout": 30, "verify_certs": False, "api_key": "<ENCODED_API_KEY>"}
+# ELASTICSEARCH_CONNECTION_OPTIONS = {"request_timeout": 30, "verify_certs": False, "api_key": ("<ID>", "<API_KEY>")}
 
 # Your Elasticsearch instance needs to be configured with xpack.security.enabled=true to use API keys - update elasticsearch.yml or .env file and restart.
 
@@ -110,7 +110,9 @@ DATABASES = {
         "ENGINE": "django.contrib.gis.db.backends.postgis",
         "HOST": "localhost",
         "NAME": "arches_resource_sets",
-        "OPTIONS": {},
+        "OPTIONS": {
+            "options": "-c cursor_tuple_fraction=1",
+        },
         "PASSWORD": "postgis",
         "PORT": "5432",
         "POSTGIS_TEMPLATE": "template_postgis",
@@ -124,29 +126,34 @@ SEARCH_THUMBNAILS = False
 
 INSTALLED_APPS = (
     "webpack_loader",
-    "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.gis",
+    "django_hosts",
     "arches",
     "arches.app.models",
     "arches.management",
     "guardian",
-    "captcha",
+    "django_recaptcha",
     "revproxy",
     "corsheaders",
     "oauth2_provider",
     "django_celery_results",
+    "django_migrate_sql",
+    "pgtrigger",
     # "silk",
-    "arches_resource_sets",
+    "arches_resource_sets",  # Ensure the project is listed before any other arches applications
 )
 
 # Placing this last ensures any templates provided by Arches Applications
 # take precedence over core arches templates in arches/app/templates.
-INSTALLED_APPS += ("arches.app",)
+INSTALLED_APPS += (
+    "arches.app",
+    "django.contrib.admin",
+)
 
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
@@ -165,9 +172,15 @@ MIDDLEWARE = [
     # "silk.middleware.SilkyMiddleware",
 ]
 
-STATICFILES_DIRS = build_staticfiles_dirs(
-    app_root=APP_ROOT,
+MIDDLEWARE.insert(  # this must resolve to first MIDDLEWARE entry
+    0, "django_hosts.middleware.HostsRequestMiddleware"
 )
+
+MIDDLEWARE.append(  # this must resolve last MIDDLEWARE entry
+    "django_hosts.middleware.HostsResponseMiddleware"
+)
+
+STATICFILES_DIRS = build_staticfiles_dirs(app_root=APP_ROOT)
 
 TEMPLATES = build_templates_config(
     debug=DEBUG,
@@ -176,7 +189,9 @@ TEMPLATES = build_templates_config(
 
 ALLOWED_HOSTS = []
 
-SYSTEM_SETTINGS_LOCAL_PATH = os.path.join(APP_ROOT, "system_settings", "System_Settings.json")
+SYSTEM_SETTINGS_LOCAL_PATH = os.path.join(
+    APP_ROOT, "system_settings", "System_Settings.json"
+)
 WSGI_APPLICATION = "arches_resource_sets.wsgi.application"
 
 # URL that handles the media served from MEDIA_ROOT, used for managing stored files.
@@ -228,7 +243,17 @@ LOGGING = {
             "handlers": ["file", "console"],
             "level": "WARNING",
             "propagate": True,
-        }
+        },
+        "arches_resource_sets": {
+            "handlers": ["file", "console"],
+            "level": "WARNING",
+            "propagate": True,
+        },
+        "django.request": {
+            "handlers": ["file", "console"],
+            "level": "WARNING",
+            "propagate": True,
+        },
     },
 }
 
@@ -260,7 +285,9 @@ HIDE_EMPTY_NODES_IN_REPORT = False
 BYPASS_UNIQUE_CONSTRAINT_TILE_VALIDATION = False
 BYPASS_REQUIRED_VALUE_TILE_VALIDATION = False
 
-DATE_IMPORT_EXPORT_FORMAT = "%Y-%m-%d"  # Custom date format for dates imported from and exported to csv
+DATE_IMPORT_EXPORT_FORMAT = (
+    "%Y-%m-%d"  # Custom date format for dates imported from and exported to csv
+)
 
 # This is used to indicate whether the data in the CSV and SHP exports should be
 # ordered as seen in the resource cards or not.
@@ -268,6 +295,15 @@ EXPORT_DATA_FIELDS_IN_CARD_ORDER = False
 
 # Identify the usernames and duration (seconds) for which you want to cache the time wheel
 CACHE_BY_USER = {"default": 3600 * 24, "anonymous": 3600 * 24}  # 24hrs  # 24hrs
+
+# Changing PERMISSION_FRAMEWORK requires reindexing.
+PERMISSION_FRAMEWORK = "arches_default_deny.ArchesDefaultDenyPermissionFramework"
+
+# Changing PERMISSION_DEFAULTS requires reindexing.
+PERMISSION_DEFAULTS = {}
+# PERMISSION_DEFAULTS = {
+#     "graphid": [{"id": "1", "type": "user", "permissions": ["no_access_to_resourceinstance"]}]
+# }
 
 TILE_CACHE_TIMEOUT = 600  # seconds
 CLUSTER_DISTANCE_MAX = 5000  # meters
@@ -285,9 +321,6 @@ ENABLE_CAPTCHA = False
 # RECAPTCHA_USE_SSL = False
 NOCAPTCHA = True
 # RECAPTCHA_PROXY = 'http://127.0.0.1:8000'
-if DEBUG is True:
-    SILENCED_SYSTEM_CHECKS = ["captcha.recaptcha_test_key_error"]
-
 
 # EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  #<-- Only need to uncomment this for testing without an actual email server
 # EMAIL_USE_TLS = True
@@ -300,7 +333,9 @@ DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 CELERY_BROKER_URL = ""  # RabbitMQ --> "amqp://guest:guest@localhost",  Redis --> "redis://localhost:6379/0"
 CELERY_ACCEPT_CONTENT = ["json"]
-CELERY_RESULT_BACKEND = "django-db"  # Use 'django-cache' if you want to use your cache as your backend
+CELERY_RESULT_BACKEND = (
+    "django-db"  # Use 'django-cache' if you want to use your cache as your backend
+)
 CELERY_TASK_SERIALIZER = "json"
 
 
@@ -366,7 +401,9 @@ RESTRICT_CELERY_EXPORT_FOR_ANONYMOUS_USER = False
 # Dictionary containing any additional context items for customising email templates
 EXTRA_EMAIL_CONTEXT = {
     "salutation": _("Hi"),
-    "expiration": (datetime.now() + timedelta(seconds=CELERY_SEARCH_EXPORT_EXPIRES)).strftime("%A, %d %B %Y"),
+    "expiration": (
+        datetime.now() + timedelta(seconds=CELERY_SEARCH_EXPORT_EXPIRES)
+    ).strftime("%A, %d %B %Y"),
 }
 
 # see https://docs.djangoproject.com/en/1.9/topics/i18n/translation/#how-django-discovers-language-preference
@@ -405,3 +442,23 @@ LANGUAGES = [
 
 # override this to permenantly display/hide the language switcher
 SHOW_LANGUAGE_SWITCH = len(LANGUAGES) > 1
+
+# Implement this class to associate custom documents to the ES resource index
+# See tests.views.search_tests.TestEsMappingModifier class for example
+# ES_MAPPING_MODIFIER_CLASSES = ["arches_resource_sets.search.es_mapping_modifier.EsMappingModifier"]
+
+try:
+    from .package_settings import *
+except ImportError:
+    try:
+        from package_settings import *
+    except ImportError as e:
+        pass
+
+try:
+    from .settings_local import *
+except ImportError as e:
+    try:
+        from settings_local import *
+    except ImportError as e:
+        pass

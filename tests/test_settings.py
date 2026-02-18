@@ -16,39 +16,14 @@ You should have received a copy of the GNU Affero General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from arches.settings import *
-import arches
 import os
 
-try:
-    from django.utils.translation import gettext_lazy as _
-except ImportError:  # unable to import prior to installing requirements.txt in setup.py
-    pass
+from arches_resource_sets.settings import *
 
 PACKAGE_NAME = "arches_resource_sets"
-APP_NAME = "arches_resource_sets"
 
-APP_ROOT = os.path.dirname(__file__)
-TEST_ROOT = os.path.normpath(os.path.join(ROOT_DIR, "..", "tests"))
-
-ROOT_URLCONF = "arches_resource_sets.arches_resource_sets.urls"
-
-ARCHES_APPLICATIONS = ()
-
-MIN_ARCHES_VERSION = arches.__version__
-MAX_ARCHES_VERSION = arches.__version__
-
-# LOAD_V3_DATA_DURING_TESTS = True will engage the most extensive the of the v3
-# data migration tests, which could add over a minute to the test process. It's
-# recommended that this setting only be set to True in tests/settings_local.py
-# and run in specific cases at the discretion of the developer.
-LOAD_V3_DATA_DURING_TESTS = False
-
-RESOURCE_GRAPH_LOCATIONS = (os.path.join(TEST_ROOT, "fixtures", "resource_graphs"),)
-
-ONTOLOGY_FIXTURES = os.path.join(TEST_ROOT, "fixtures", "ontologies", "test_ontology")
-ONTOLOGY_PATH = os.path.join(TEST_ROOT, "fixtures", "ontologies", "cidoc_crm")
-MEDIA_ROOT = os.path.join(TEST_ROOT, "fixtures", "data")
+PROJECT_TEST_ROOT = os.path.dirname(__file__)
+MEDIA_ROOT = os.path.join(PROJECT_TEST_ROOT, "fixtures", "data")
 
 BUSINESS_DATA_FILES = (
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
@@ -64,7 +39,9 @@ DATABASES = {
         "ENGINE": "django.contrib.gis.db.backends.postgis",
         "HOST": "localhost",
         "NAME": "arches_resource_sets",
-        "OPTIONS": {},
+        "OPTIONS": {
+            "options": "-c cursor_tuple_fraction=1",
+        },
         "PASSWORD": "postgis",
         "PORT": "5432",
         "POSTGIS_TEMPLATE": "template_postgis",
@@ -88,43 +65,11 @@ LOGGING["loggers"]["arches"]["level"] = "ERROR"
 
 ELASTICSEARCH_PREFIX = "test"
 
-TEST_RUNNER = "tests.base_test.ArchesTestRunner"
+TEST_RUNNER = "arches.test.runner.ArchesTestRunner"
 SILENCED_SYSTEM_CHECKS.append(
-    "arches.W001"
-)  # Cache backend does not support rate-limiting
+    "arches.W001",  # Cache backend does not support rate-limiting
+)
 
-# could add Chrome, PhantomJS etc... here
-LOCAL_BROWSERS = []  # ['Firefox']
-
-ENABLE_USER_SIGNUP = True
-FORCE_USER_SIGNUP_EMAIL_AUTHENTICATION = True
-
-OVERRIDE_RESOURCE_MODEL_LOCK = True
-
-ENABLE_TWO_FACTOR_AUTHENTICATION = False
-FORCE_TWO_FACTOR_AUTHENTICATION = False
-
-DATATYPE_LOCATIONS.append("tests.fixtures.datatypes")
 ELASTICSEARCH_HOSTS = [
     {"scheme": "http", "host": "localhost", "port": ELASTICSEARCH_HTTP_PORT}
 ]
-LANGUAGES = [
-    ("de", _("German")),
-    ("en", _("English")),
-    ("en-gb", _("British English")),
-    ("es", _("Spanish")),
-    ("ar", _("Arabic")),
-]
-
-DOCKER = False
-
-try:
-    from arches.settings_local import *
-except ImportError:
-    pass
-
-if DOCKER:
-    try:
-        from arches.settings_docker import *
-    except ImportError:
-        pass
