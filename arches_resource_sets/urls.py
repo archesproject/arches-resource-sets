@@ -36,7 +36,16 @@ urlpatterns = [
         name="resource_set_members_bulk",
     ),
 ]
+
+handler400 = "arches.app.views.main.custom_400"
+handler403 = "arches.app.views.main.custom_403"
+handler404 = "arches.app.views.main.custom_404"
+handler500 = "arches.app.views.main.custom_500"
+
 # Ensure Arches core urls are superseded by project-level urls
+urlpatterns.append(path("", include("arches.urls")))
+
+# Adds URL pattern to serve media files during development
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 # Only handle i18n routing in active project. This will still handle the routes provided by Arches core and Arches applications,
