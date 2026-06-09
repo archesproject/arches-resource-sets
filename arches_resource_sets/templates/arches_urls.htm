@@ -1,0 +1,10 @@
+{% extends "arches_urls.htm" %}
+
+{% load i18n %}
+
+{% block arches_urls %}
+{{ block.super }}
+<div class="arches-urls"
+    resource_sets="{% url 'resource_sets' %}"
+></div>
+{% endblock arches_urls %}
