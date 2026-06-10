@@ -9,6 +9,7 @@ export default function (params) {
     const resourceSetsUrl = arches.urls.resource_sets;
     let preloadedResourceSets = [];
     let preloadPromise = null;
+    this.lookupVersion = ko.observable(0);
 
     params.configKeys = ["placeholder", "defaultValue", "multiValue"];
     WidgetViewModel.apply(this, [params]);
@@ -91,7 +92,10 @@ export default function (params) {
     };
 
     const fetchAllResourceSets = function () {
-        console.log("resourceSetsUrl: ", resourceSetsUrl);
+        if (!resourceSetsUrl) {
+            return Promise.resolve([]);
+        }
+
         return window
             .fetch(resourceSetsUrl, { credentials: "include" })
             .then((response) => {
@@ -117,11 +121,13 @@ export default function (params) {
                     entries.forEach((item) => {
                         nameLookup[item.id] = item.text;
                     });
+                    self.lookupVersion(self.lookupVersion() + 1);
                     return entries;
                 })
                 .catch((error) => {
                     preloadPromise = null;
-                    throw error;
+                    console.warn("Could not preload resource sets", error);
+                    return [];
                 });
         }
 
@@ -130,6 +136,11 @@ export default function (params) {
 
     const loadResults = function (term) {
         return preloadResourceSets().then((entries) => filterEntries(entries, term));
+    };
+
+    this.getReportLabel = function (id) {
+        self.lookupVersion();
+        return nameLookup[id] || id || "";
     };
 
     const syncSelectionFromValue = function (value) {
@@ -187,6 +198,7 @@ export default function (params) {
                 allResourceSets.forEach((item) => {
                     nameLookup[item.id] = item.text;
                 });
+                self.lookupVersion(self.lookupVersion() + 1);
 
                 return {
                     results: allResourceSets,
@@ -200,6 +212,7 @@ export default function (params) {
             }
             if (item.id && item.text) {
                 nameLookup[item.id] = item.text;
+                self.lookupVersion(self.lookupVersion() + 1);
             }
             return item.text || item.id;
         },

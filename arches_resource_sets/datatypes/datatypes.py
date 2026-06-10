@@ -1,3 +1,4 @@
+import ast
 import json
 
 from django.db.models import JSONField
@@ -5,24 +6,7 @@ from django.utils.translation import gettext as _
 
 from arches.app.datatypes.base import BaseDataType
 
-try:
-    import rest_framework.fields
-except Exception:
-    rest_framework = None
-else:
-
-    class JsonSerializer(rest_framework.fields.JSONField):
-        def to_internal_value(self, data):
-            return JsonDataType().transform_value_for_tile(data)
-
-
-class JsonField(JSONField):
-    pass
-
-
 class JsonDataType(BaseDataType):
-    model_field = JsonField(null=True)
-
     def validate(
         self,
         value,
@@ -38,13 +22,13 @@ class JsonDataType(BaseDataType):
 
         try:
             self.transform_value_for_tile(value)
-        except (TypeError, ValueError, json.JSONDecodeError) as exc:
+        except (TypeError, ValueError, json.JSONDecodeError) as e:
             return [
                 self.create_error_message(
                     value=value,
                     source=source,
                     row_number=row_number,
-                    message=str(exc),
+                    message=str(e),
                     title=_("Invalid JSON"),
                 )
             ]
@@ -56,7 +40,13 @@ class JsonDataType(BaseDataType):
             return None
 
         if isinstance(value, str):
-            return json.loads(value)
+            try:
+                return json.loads(value)
+            except Exception:
+                try:
+                    return ast.literal_eval(value)
+                except Exception:
+                    return value
 
         if isinstance(value, (dict, list, int, float, bool)):
             return value
@@ -86,18 +76,3 @@ class JsonDataType(BaseDataType):
             return json.dumps(value, indent=2, sort_keys=True)
         except TypeError:
             return str(value)
-
-    def append_to_document(self, document, nodevalue, nodeid, tile, provisional=False):
-        if nodevalue in (None, ""):
-            return
-
-        if "strings" not in document:
-            document["strings"] = []
-
-        document["strings"].append(
-            {
-                "string": json.dumps(nodevalue, sort_keys=True),
-                "nodegroup_id": tile.nodegroup_id,
-                "provisional": provisional,
-            }
-        )

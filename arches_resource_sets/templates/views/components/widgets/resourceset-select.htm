@@ -68,7 +68,7 @@
 <!-- ko if: value -->
     <!-- ko foreach: [].concat(value()) -->
     <dd data-bind="class: $parent.nodeCssClasses">
-        <span data-bind="text: $data"></span>
+        <span data-bind="text: $parent.getReportLabel($data)"></span>
     </dd>
     <!-- /ko -->
 <!-- /ko -->
