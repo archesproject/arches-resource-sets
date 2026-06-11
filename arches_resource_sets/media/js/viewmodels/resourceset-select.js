@@ -47,29 +47,57 @@ export default function (params) {
         return ids.length ? ids[0] : null;
     };
 
+    const extractValue = function (langEntry) {
+        if (typeof langEntry === "string") return langEntry;
+        if (langEntry && typeof langEntry === "object") return langEntry.value || "";
+        return "";
+    };
+
     const getDescriptionText = function (description) {
         if (!description) {
             return "";
         }
+
+        // I18n_TextField may be serialized as a JSON string
         if (typeof description === "string") {
-            return description;
-        }
-        if (typeof description === "object") {
-            const languageValue = description[arches.activeLanguage];
-            if (typeof languageValue === "string") {
-                return languageValue;
-            }
-            if (languageValue && typeof languageValue === "object") {
-                return languageValue.value || "";
-            }
-            const fallback = description[Object.keys(description)[0]];
-            if (typeof fallback === "string") {
-                return fallback;
-            }
-            if (fallback && typeof fallback === "object") {
-                return fallback.value || "";
+            try {
+                description = JSON.parse(description);
+            } catch (e) {
+                return description;
             }
         }
+
+        if (typeof description !== "object") {
+            return String(description);
+        }
+
+        const activeLanguage = arches.activeLanguage || "en";
+
+        // 1. Exact match: e.g. "en-US"
+        if (description[activeLanguage]) {
+            return extractValue(description[activeLanguage]);
+        }
+
+        // 2. Language prefix match: e.g. "en" from "en-US"
+        const langPrefix = activeLanguage.split("-")[0];
+        if (langPrefix !== activeLanguage && description[langPrefix]) {
+            return extractValue(description[langPrefix]);
+        }
+
+        // 3. Any key that starts with the same prefix: e.g. "en-GB" when active is "en-US"
+        const prefixKey = Object.keys(description).find((key) =>
+            key.startsWith(langPrefix),
+        );
+        if (prefixKey) {
+            return extractValue(description[prefixKey]);
+        }
+
+        // 4. Fall back to the first available language
+        const firstKey = Object.keys(description)[0];
+        if (firstKey) {
+            return extractValue(description[firstKey]);
+        }
+
         return "";
     };
 
