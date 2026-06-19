@@ -171,6 +171,21 @@ export default function (params) {
         return nameLookup[id] || id || "";
     };
 
+    this.displayValue = ko.computed(function () {
+        self.lookupVersion();
+        const ids = normalizeIds(ko.unwrap(self.value));
+        if (!ids.length) {
+            return "";
+        }
+
+        const labels = ids.map((id) => self.getReportLabel(id)).filter((label) => !!label);
+        if (!labels.length) {
+            return "";
+        }
+
+        return self.multiple ? labels.join(", ") : labels[0];
+    });
+
     const syncSelectionFromValue = function (value) {
         const ids = normalizeIds(ko.unwrap(value));
         if (JSON.stringify(self.selectionValue()) !== JSON.stringify(ids)) {
