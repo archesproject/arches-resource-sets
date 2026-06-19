@@ -5,11 +5,10 @@ import WidgetViewModel from "viewmodels/widget";
 
 export default function (params) {
     const self = this;
-    const nameLookup = {};
+    const nameLookup = ko.observable({});
     const resourceSetsUrl = arches.urls.resource_sets;
     let preloadedResourceSets = [];
     let preloadPromise = null;
-    this.lookupVersion = ko.observable(0);
 
     params.configKeys = ["placeholder", "defaultValue", "multiValue"];
     WidgetViewModel.apply(this, [params]);
@@ -106,6 +105,35 @@ export default function (params) {
         return description || resourceSet.id;
     };
 
+    const setLookupEntries = function (entries) {
+        if (!Array.isArray(entries) || !entries.length) {
+            return;
+        }
+
+        const currentLookup = nameLookup();
+        const nextLookup = { ...currentLookup };
+        let hasChanges = false;
+
+        entries.forEach((item) => {
+            if (item?.id && item?.text && nextLookup[item.id] !== item.text) {
+                nextLookup[item.id] = item.text;
+                hasChanges = true;
+            }
+        });
+
+        if (hasChanges) {
+            nameLookup(nextLookup);
+        }
+    };
+
+    const getLookupLabel = function (id) {
+        if (!id) {
+            return "";
+        }
+        const lookup = nameLookup();
+        return lookup[id] || id;
+    };
+
     const filterEntries = function (entries, term) {
         const normalizedTerm = (term || "").toLowerCase();
         return entries.filter((entry) => {
@@ -146,10 +174,7 @@ export default function (params) {
             preloadPromise = fetchAllResourceSets()
                 .then((entries) => {
                     preloadedResourceSets = entries;
-                    entries.forEach((item) => {
-                        nameLookup[item.id] = item.text;
-                    });
-                    self.lookupVersion(self.lookupVersion() + 1);
+                    setLookupEntries(entries);
                     return entries;
                 })
                 .catch((error) => {
@@ -167,12 +192,10 @@ export default function (params) {
     };
 
     this.getReportLabel = function (id) {
-        self.lookupVersion();
-        return nameLookup[id] || id || "";
+        return getLookupLabel(id);
     };
 
     this.displayValue = ko.computed(function () {
-        self.lookupVersion();
         const ids = normalizeIds(ko.unwrap(self.value));
         if (!ids.length) {
             return "";
@@ -238,10 +261,7 @@ export default function (params) {
                 }
 
                 allResourceSets = filterEntries(allResourceSets, term);
-                allResourceSets.forEach((item) => {
-                    nameLookup[item.id] = item.text;
-                });
-                self.lookupVersion(self.lookupVersion() + 1);
+                setLookupEntries(allResourceSets);
 
                 return {
                     results: allResourceSets,
@@ -254,13 +274,12 @@ export default function (params) {
                 return item.text;
             }
             if (item.id && item.text) {
-                nameLookup[item.id] = item.text;
-                self.lookupVersion(self.lookupVersion() + 1);
+                setLookupEntries([item]);
             }
             return item.text || item.id;
         },
         templateSelection: function (item) {
-            return nameLookup[item.id] || item.text || item.id || "";
+            return getLookupLabel(item?.id) || item?.text || item?.id || "";
         },
         escapeMarkup: function (markup) {
             return markup;

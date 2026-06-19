@@ -31,23 +31,8 @@ class Migration(migrations.Migration):
             'views/components/datatypes/json',
             'json-datatype-config',
             FALSE,
-            'a8fb1f35-78c8-4f3b-8cea-cf03295f4b79',
+            'd7e72695-fcea-4cf5-92cf-0e404f96cace',
             FALSE
-        )
-        ON CONFLICT DO NOTHING;
-
-        INSERT INTO widgets(
-            widgetid,
-            name,
-            component,
-            datatype,
-            defaultconfig
-        ) VALUES (
-            'a8fb1f35-78c8-4f3b-8cea-cf03295f4b79',
-            'json-widget',
-            'views/components/widgets/json',
-            'json',
-            '{"placeholder": "", "rows": 8, "defaultValue": null}'
         )
         ON CONFLICT DO NOTHING;
 
