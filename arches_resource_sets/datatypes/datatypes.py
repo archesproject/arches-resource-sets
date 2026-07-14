@@ -5,6 +5,7 @@ from django.utils.translation import gettext as _
 
 from arches.app.datatypes.base import BaseDataType
 
+
 class JsonDataType(BaseDataType):
     def validate(
         self,
@@ -16,9 +17,6 @@ class JsonDataType(BaseDataType):
         strict=False,
         **kwargs,
     ):
-        if value in (None, ""):
-            return []
-
         try:
             self.transform_value_for_tile(value)
         except (TypeError, ValueError, json.JSONDecodeError) as e:
@@ -42,16 +40,16 @@ class JsonDataType(BaseDataType):
                 try:
                     return ast.literal_eval(value)
                 except Exception:
-                    return value
+                    raise TypeError(_("Value must be coercible to valid JSON"))
 
-        if isinstance(value, (dict, list, int, float, bool)):
+        if value is None or isinstance(value, (dict, list, int, float, bool)):
             return value
 
-        raise TypeError(_("Value must be valid JSON"))
+        raise TypeError(_("Value must be coercible to valid JSON"))
 
     def clean(self, tile, nodeid):
         super().clean(tile, nodeid)
-        if tile.data[nodeid] in ([], {}):
+        if tile.data[nodeid] in ([], {}, ""):
             tile.data[nodeid] = None
 
     def transform_export_values(self, value, *args, **kwargs):
@@ -59,14 +57,13 @@ class JsonDataType(BaseDataType):
             return None
         return json.dumps(value)
 
-
     def get_display_value(self, tile, node, **kwargs):
         data = self.get_tile_data(tile)
         if not data:
             return ""
 
         value = data.get(str(node.nodeid))
-        if value in (None, ""):
+        if value in (None, "", [], {}):
             return ""
 
         try:
