@@ -1,3 +1,4 @@
+import uuid
 from json import JSONDecodeError
 import logging
 
@@ -9,12 +10,17 @@ from arches_resource_sets.models import ResourceSet
 
 logger = logging.getLogger(__name__)
 class ResourceSetMembersBulkView(APIBase):
-    def post(self, request, set_id):
-        try:        
+    def post(self, request, set_id=None):
+        try:
             request_body = JSONDeserializer().deserialize(request.body)
             resource_instance_ids = request_body["resource_instance_ids"] if "resource_instance_ids" in request_body else ""
             operation = request_body["operation"] if "operation" in request_body else "add"
-            resource_set = ResourceSet.objects.get(id=set_id)
+            if set_id:
+                resource_set = ResourceSet.objects.get(id=set_id)
+            else:
+                description = request_body.get("description")
+                resource_set = ResourceSet.objects.create(owner=request.user, description=description)
+
             if operation == "add":
                 added, errors = resource_set.add_members(resource_instance_ids)
                 return JSONResponse({"added": added, "errors": errors})
