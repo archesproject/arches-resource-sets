@@ -35,6 +35,11 @@ urlpatterns = [
         ResourceSetMembersBulkView.as_view(),
         name="resource_set_members_bulk",
     ),
+    path(
+        "resource_sets/bulk",
+        ResourceSetMembersBulkView.as_view(),
+        name="resource_set_members_bulk_create",
+    ),
 ]
 
 handler400 = "arches.app.views.main.custom_400"
