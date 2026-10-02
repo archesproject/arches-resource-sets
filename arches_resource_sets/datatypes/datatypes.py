@@ -1,12 +1,15 @@
 import ast
 import json
 
+import django.db.models
 from django.utils.translation import gettext as _
 
 from arches.app.datatypes.base import BaseDataType
 
 
 class JsonDataType(BaseDataType):
+    model_field = django.db.models.JSONField(null=True)
+
     def validate(
         self,
         value,
