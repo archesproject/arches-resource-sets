@@ -14,6 +14,7 @@ class ResourceSet(models.Model):
         on_delete=models.CASCADE,
         to=settings.AUTH_USER_MODEL,
     )
+    name = I18n_TextField(blank=True, null=True)
     description = I18n_TextField(blank=True, null=True)
     date_created = models.DateTimeField(auto_now_add=True, blank=True)
     date_updated = models.DateTimeField(auto_now=True, blank=True)
@@ -27,7 +28,9 @@ class ResourceSet(models.Model):
         errors = {}
         for member in members:
             try:
-                ResourceSetMember.objects.create(resource_set_id=self.id, resource_instance_id=member)
+                ResourceSetMember.objects.create(
+                    resource_set_id=self.id, resource_instance_id=member
+                )
                 added.append(member)
             except Exception as e:
                 errors[member] = str(e)
@@ -38,7 +41,9 @@ class ResourceSet(models.Model):
         errors = {}
         for member in members:
             try:
-                ResourceSetMember.objects.get(resource_set_id=self.id, resource_instance_id=member).delete()
+                ResourceSetMember.objects.get(
+                    resource_set_id=self.id, resource_instance_id=member
+                ).delete()
                 removed.append(member)
             except Exception as e:
                 errors[member] = str(e)
@@ -47,7 +52,9 @@ class ResourceSet(models.Model):
 
 class ResourceSetMember(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    resource_set = models.ForeignKey(ResourceSet, on_delete=models.CASCADE, blank=False, null=False)
+    resource_set = models.ForeignKey(
+        ResourceSet, on_delete=models.CASCADE, blank=False, null=False
+    )
     resource_instance = models.ForeignKey(ResourceInstance, on_delete=models.CASCADE)
 
     class Meta:

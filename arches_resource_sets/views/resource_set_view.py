@@ -11,6 +11,7 @@ from arches.app.utils.betterJSONSerializer import JSONDeserializer, JSONSerializ
 
 logger = logging.getLogger(__name__)
 
+
 class ResourceSetView(APIBase):
     def get(self, request, set_id=None):
         if set_id is None:
@@ -22,37 +23,54 @@ class ResourceSetView(APIBase):
         try:
             resource_set = ResourceSet.objects.get(id=set_id)
             request_body = JSONDeserializer().deserialize(request.body)
-            description = request_body["description"] if "description" else ""
-            resource_set.description = description
+            for field in ("name", "description"):
+                if field in request_body:
+                    setattr(resource_set, field, request_body[field])
             resource_set.save()
             return JSONResponse({"resource_set": resource_set})
         except ResourceSet.DoesNotExist:
-            return JSONErrorResponse("Could not update resource set", "Resource set id '{}' not found".format(set_id), status=404)
+            return JSONErrorResponse(
+                "Could not update resource set",
+                "Resource set id '{}' not found".format(set_id),
+                status=404,
+            )
         except JSONDecodeError:
-            return JSONErrorResponse("Could not update resource set", "Invalid request body: '{}'".format(request.body), status=400) 
+            return JSONErrorResponse(
+                "Could not update resource set",
+                "Invalid request body: '{}'".format(request.body),
+                status=400,
+            )
         except Exception as e:
             logger.error(e)
-            return JSONErrorResponse("Unspecified error", "Contact an Administrator", status=500)
-
-
+            return JSONErrorResponse(
+                "Unspecified error", "Contact an Administrator", status=500
+            )
 
     def post(self, request):
+        name = ""
         description = ""
         set_id = uuid.uuid4()
         try:
             if request.body:
                 request_body = JSONDeserializer().deserialize(request.body)
-                description = request_body["description"] if "description" in request_body else ""
+                name = request_body.get("name", "")
+                description = request_body.get("description", "")
 
-            resource_set = ResourceSet.objects.create(id=set_id, owner=request.user, description=description)
+            resource_set = ResourceSet.objects.create(
+                id=set_id, owner=request.user, name=name, description=description
+            )
             return JSONResponse({"resource_set": resource_set})
         except JSONDecodeError:
-            return JSONErrorResponse("Request was malformed", "Ensure the request body is valid json", status=400)
+            return JSONErrorResponse(
+                "Request was malformed",
+                "Ensure the request body is valid json",
+                status=400,
+            )
         except Exception as e:
             logger.error(e)
-            return JSONErrorResponse("Unspecified error", "Contact an Administrator", status=500)
-
-
+            return JSONErrorResponse(
+                "Unspecified error", "Contact an Administrator", status=500
+            )
 
     def delete(self, request, set_id):
         try:
@@ -61,8 +79,13 @@ class ResourceSetView(APIBase):
             set_obj.id = set_id
             return JSONResponse({"resource_set": set_obj})
         except ResourceSet.DoesNotExist:
-            return JSONErrorResponse("Could not delete resource set", "Resource set id '{}' not found".format(set_id), status=404)   
+            return JSONErrorResponse(
+                "Could not delete resource set",
+                "Resource set id '{}' not found".format(set_id),
+                status=404,
+            )
         except Exception as e:
             logger.error(e)
-            return JSONErrorResponse("Unspecified error", "Contact an Administrator", status=500)
-
+            return JSONErrorResponse(
+                "Unspecified error", "Contact an Administrator", status=500
+            )

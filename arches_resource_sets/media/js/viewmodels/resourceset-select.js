@@ -25,7 +25,7 @@ export default function (params) {
         const resourceSets = data?.resource_sets || [];
         return resourceSets.map((resourceSet) => ({
             id: resourceSet.id,
-            text: resourceSet.description || resourceSet.id,
+            text: resourceSet.name || resourceSet.description || resourceSet.id,
         }));
     };
 
