@@ -133,7 +133,6 @@ INSTALLED_APPS = (
     "django.contrib.staticfiles",
     "django.contrib.gis",
     "django_hosts",
-    "arches",
     "arches.app.models",
     "arches.management",
     "guardian",
@@ -148,9 +147,11 @@ INSTALLED_APPS = (
     "arches_resource_sets",  # Ensure the project is listed before any other arches applications
 )
 
-# Placing this last ensures any templates provided by Arches Applications
-# take precedence over core arches templates in arches/app/templates.
+# Placing this last ensures any templates and modules provided by
+# Arches Applications take precedence over core arches templates
+# in arches/app/templates.
 INSTALLED_APPS += (
+    "arches",
     "arches.app",
     "django.contrib.admin",
 )
@@ -310,6 +311,8 @@ CLUSTER_DISTANCE_MAX = 5000  # meters
 GRAPH_MODEL_CACHE_TIMEOUT = None
 
 OAUTH_CLIENT_ID = ""  #'9JCibwrWQ4hwuGn5fu2u1oRZSs9V6gK8Vu8hpRC4'
+# Public "Device Code" application, for browser sign-in from desktop clients
+OAUTH_DEVICE_CLIENT_ID = ""
 
 APP_TITLE = "Arches | Heritage Data Management"
 COPYRIGHT_TEXT = "All Rights Reserved."
@@ -322,14 +325,18 @@ ENABLE_CAPTCHA = False
 NOCAPTCHA = True
 # RECAPTCHA_PROXY = 'http://127.0.0.1:8000'
 
-# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  #<-- Only need to uncomment this for testing without an actual email server
-# EMAIL_USE_TLS = True
-# EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_HOST_USER = "xxxx@xxx.com"
-# EMAIL_HOST_PASSWORD = 'xxxxxxx'
-# EMAIL_PORT = 587
+MAILERS = {
+    "default": {
+        "OPTIONS": {
+            "use_tls": True,
+            # "host": "smtp.gmail.com",
+            "username": "xxxx@xxx.com",
+            # "password" = "xxxxxxx",
+        },
+    },
+}
 
-DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+DEFAULT_FROM_EMAIL = MAILERS["default"]["OPTIONS"]["username"]
 
 CELERY_BROKER_URL = ""  # RabbitMQ --> "amqp://guest:guest@localhost",  Redis --> "redis://localhost:6379/0"
 CELERY_ACCEPT_CONTENT = ["json"]
