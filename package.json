@@ -20,10 +20,7 @@
         "vitest": "vitest --run --coverage"
     },
     "dependencies": {
-        "arches": "archesproject/arches#dev/8.1.x"
-    },
-    "devDependencies": {
-        "arches-dev-dependencies": "archesproject/arches-dev-dependencies#dev/8.1.x"
+        "arches": "archesproject/arches#semver:^v8.2.0-alpha.23"
     },
     "nodeModulesPaths": {
     },
@@ -31,6 +28,10 @@
         "moment-timezone": "^0.5.45",
         "nomnom": "npm:@gerhobbelt/nomnom",
         "rimraf": "^5.0.7", 
-        "underscore": "^1.13.6"
+        "underscore": "^1.13.6",
+        "@vitest/coverage-v8": "5.0.5",
+        "postcss": "8.5.23",
+        "sass": "1.78.0",
+        "vite": "8.3.5"
     }
 }

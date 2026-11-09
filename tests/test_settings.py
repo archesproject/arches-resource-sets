@@ -37,17 +37,17 @@ DATABASES = {
         "AUTOCOMMIT": True,
         "CONN_MAX_AGE": 0,
         "ENGINE": "django.contrib.gis.db.backends.postgis",
-        "HOST": "localhost",
+        "HOST": os.environ.get("PGHOST", "localhost"),
         "NAME": "arches_resource_sets",
         "OPTIONS": {
             "options": "-c cursor_tuple_fraction=1",
         },
-        "PASSWORD": "postgis",
-        "PORT": "5432",
+        "PASSWORD": os.environ.get("PGPASSWORD", "postgis"),
+        "PORT": os.environ.get("PGPORT", "5432"),
         "POSTGIS_TEMPLATE": "template_postgis",
         "TEST": {"CHARSET": None, "COLLATION": None, "MIRROR": None, "NAME": None},
         "TIME_ZONE": None,
-        "USER": "postgres",
+        "USER": os.environ.get("PGUSER", "postgres"),
     }
 }
 
@@ -64,6 +64,8 @@ CACHES = {
 LOGGING["loggers"]["arches"]["level"] = "ERROR"
 
 ELASTICSEARCH_PREFIX = "test"
+# Extension tests do not exercise search.
+ELASTICSEARCH_ENABLED = False
 
 TEST_RUNNER = "arches.test.runner.ArchesTestRunner"
 SILENCED_SYSTEM_CHECKS.append(
